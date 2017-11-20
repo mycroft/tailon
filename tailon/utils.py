@@ -81,7 +81,8 @@ class FileLister:
         self.refresh()
 
     def is_path_allowed(self, path):
-        return path in self.all_file_names
+        return path in self.all_file_names or '%s/' %(path) in self.all_dir_names
+
 
     def refresh(self):
         log.debug('refreshing group file listings')
