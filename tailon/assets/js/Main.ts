@@ -31,6 +31,7 @@ let settings = new Settings.Settings({
     wrapLines: window.clientConfig['wrap-lines-initial'],
     linesOfHistory: 2000,  // 0 for infinite history.
     linesToTail: window.clientConfig['tail-lines-initial'],  // i.e. tail -n $linesToTail.
+    dirMode: window.clientConfig['dir_mode'],  // i.e. tail -n $linesToTail.
 
     currentCommand: null,
     currentFile: null,
@@ -194,8 +195,10 @@ class FileSelect {
         this.select.clearOptions();
         this.select.clearOptionGroups();
 
+        var urlReq = settings.get('dirMode') ? "dirs" : "files";
+
         $.ajax({
-            url: 'files', type: 'GET', async: false,
+            url: urlReq, type: 'GET', async: false,
             success: this.listFilesSuccess
         });
     }
