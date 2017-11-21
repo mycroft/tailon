@@ -31,7 +31,7 @@ let settings = new Settings.Settings({
     wrapLines: window.clientConfig['wrap-lines-initial'],
     linesOfHistory: 2000,  // 0 for infinite history.
     linesToTail: window.clientConfig['tail-lines-initial'],  // i.e. tail -n $linesToTail.
-    dirMode: window.clientConfig['dir_mode'],  // i.e. tail -n $linesToTail.
+    dirMode: window.clientConfig['dir-mode'],  // i.e. tail -n $linesToTail.
 
     currentCommand: null,
     currentFile: null,
@@ -398,7 +398,7 @@ function changeFileModeScript() {
         'path': path,
         'script': script,
         'tail-lines': settings.get<number>('linesToTail'),
-        'dir_mode': setting.get<boolean>('dirMode')
+        'dir-mode': settings.get<boolean>('dirMode')
     };
 
     // Don't do anything if the current message is the same as the
