@@ -81,19 +81,22 @@ class FileLister:
         self.refresh()
 
     def is_path_allowed(self, path):
-        return path in self.all_file_names or '%s/' %(path) in self.all_dir_names
+        return path in self.all_file_names or path in self.all_dir_names
 
 
     def refresh(self):
         log.debug('refreshing group file listings')
         self.files = collections.OrderedDict()
+        self.dirs = collections.OrderedDict()
         self.all_dir_names = set()
 
         for group, paths in self.groups.items():
             files = self.files.setdefault(group, [])
+            dirs = self.dirs.setdefault(group, [])
             for path in paths:
                 if os.path.isdir(path):
-                    self.all_dir_names.add(path)
+                    self.all_dir_names.add(os.path.abspath(path))
+                    dirs.append([os.path.abspath(path)])
                     files.extend(self.lister.listdir(path))
                 else:
                     files.append(path)

@@ -55,6 +55,19 @@ class Files(BaseHandler):
         self.write(escape.json_encode(message))
 
 
+class Dirs(BaseHandler):
+    def get(self, check=None):
+        self.application.file_lister.refresh()
+        self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.set_header('Content-Type', 'application/json')
+
+        if check:
+            message = self.application.file_lister.has_changed
+        else:
+            message = self.application.file_lister.dirs
+        self.write(escape.json_encode(message))
+
+
 class NonCachingStaticFileHandler(web.StaticFileHandler):
     def set_extra_headers(self, path):
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
@@ -298,6 +311,7 @@ class TailonApplication(BaseApplication):
         routes = [
             [r'/assets/(.*)', NonCachingStaticFileHandler, {'path': os.path.join(self.here, 'assets/')}],
             [r'/files(/check)?', Files],
+            [r'/dirs(/check)?', Dirs],
             [r'/fetch/(.*)', Fetch, {'path': '/'}],
             [r'/', Index, {'template': 'tailon.html'}],
         ]
