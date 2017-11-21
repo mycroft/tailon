@@ -71,7 +71,8 @@ def parseconfig(cfg):
         'http-auth':       raw_config.get('http-auth', False),
         'users':           raw_config.get('users', {}),
         'wrap-lines':      raw_config.get('wrap-lines', True),
-        'tail-lines':      raw_config.get('tail-lines', 10)
+        'tail-lines':      raw_config.get('tail-lines', 10),
+        'dir-mode':        raw_config.get('dir-mode', False)
     }
 
     if 'files' not in raw_config or not len(raw_config['files']):
@@ -116,6 +117,7 @@ def parseopts(args=None):
       commands: [tail, grep]  # allowed commands
       tail-lines: 10          # number of lines to tail initially
       wrap-lines: true        # initial line-wrapping state
+      dir-mode: False         # Do we monitor files or directories
 
       files:
         - '/var/log/messages'
@@ -184,6 +186,9 @@ def parseopts(args=None):
         choices=commands.ToolPaths.command_names, default=['tail', 'grep', 'awk'],
         help='allowed commands (default: tail grep awk)')
 
+    arg('--dir-mode', default=False, type=bool, metavar='dir_mode',
+        help='Do we monitor files or directories')
+
     #-------------------------------------------------------------------------
     group = parser.add_argument_group('User-interface options')
     arg = group.add_argument
@@ -212,6 +217,7 @@ def setup(opts):
         'debug': opts.__dict__.get('debug', False),
         'tail-lines': opts.__dict__.get('tail_lines', 10),
         'wrap-lines': opts.__dict__.get('wrap-lines', True),
+        'dir-mode': opts.__disct__.get('dir-mode', False),
     }
 
     if config['follow-names']:
@@ -288,6 +294,7 @@ def main(argv=sys.argv):
         # refresh the filelist every time the file select element is focused.
         'refresh_filelist': bool(file_lister.all_dir_names),
         'commands': config['commands'],
+        'dir-mode': config['dir-mode'],
     }
 
     template_dir, assets_dir = get_resource_dirs()
