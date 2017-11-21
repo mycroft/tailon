@@ -397,7 +397,8 @@ function changeFileModeScript() {
         'command': command,
         'path': path,
         'script': script,
-        'tail-lines': settings.get<number>('linesToTail')
+        'tail-lines': settings.get<number>('linesToTail'),
+        'dir_mode': setting.get<boolean>('dirMode')
     };
 
     // Don't do anything if the current message is the same as the
