@@ -72,7 +72,7 @@ def parseconfig(cfg):
         'users':           raw_config.get('users', {}),
         'wrap-lines':      raw_config.get('wrap-lines', True),
         'tail-lines':      raw_config.get('tail-lines', 10),
-        'dir-mode':        raw_config.get('dir-mode', False)
+        'dir-mode':        raw_config.get('dir-mode', False),
     }
 
     if 'files' not in raw_config or not len(raw_config['files']):
@@ -160,6 +160,7 @@ def parseopts(args=None):
     arg('-h', '--help', action='help', help='show this help message and exit')
     arg('-d', '--debug', action='store_true', help='show debug messages')
     arg('-v', '--version', action='version', version='tailon version %s' % __version__)
+    arg('-D', '--dir-mode', action='store_true', help='Do we monitor files or directories')
 
     arg('--output-encoding', dest='output_encoding', metavar='enc',
         help="encoding for output")
@@ -185,9 +186,6 @@ def parseopts(args=None):
     arg('-m', '--commands', nargs='*', metavar='cmd',
         choices=commands.ToolPaths.command_names, default=['tail', 'grep', 'awk'],
         help='allowed commands (default: tail grep awk)')
-
-    arg('--dir-mode', default=False, type=bool, metavar='dir_mode',
-        help='Do we monitor files or directories')
 
     #-------------------------------------------------------------------------
     group = parser.add_argument_group('User-interface options')
@@ -217,7 +215,7 @@ def setup(opts):
         'debug': opts.__dict__.get('debug', False),
         'tail-lines': opts.__dict__.get('tail_lines', 10),
         'wrap-lines': opts.__dict__.get('wrap-lines', True),
-        'dir-mode': opts.__disct__.get('dir-mode', False),
+        'dir-mode': opts.__dict__.get('dir_mode', False),
     }
 
     if config['follow-names']:
