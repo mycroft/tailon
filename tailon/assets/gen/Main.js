@@ -304,6 +304,7 @@ var settings = new Settings.Settings({
     wrapLines: window.clientConfig['wrap-lines-initial'],
     linesOfHistory: 2000,
     linesToTail: window.clientConfig['tail-lines-initial'],
+    dirMode: window.clientConfig['dir-mode'],
     currentCommand: null,
     currentFile: null,
     currentScript: null,
@@ -399,8 +400,9 @@ var FileSelect = /** @class */ (function () {
         this.updateValues = function () {
             _this.select.clearOptions();
             _this.select.clearOptionGroups();
+            var urlReq = settings.get('dirMode') ? "dirs" : "files";
             $.ajax({
-                url: 'files', type: 'GET', async: false,
+                url: urlReq, type: 'GET', async: false,
                 success: _this.listFilesSuccess
             });
         };
@@ -583,7 +585,8 @@ function changeFileModeScript() {
         'command': command,
         'path': path,
         'script': script,
-        'tail-lines': settings.get('linesToTail')
+        'tail-lines': settings.get('linesToTail'),
+        'dir-mode': settings.get('dirMode')
     };
     // Don't do anything if the current message is the same as the
     // previous message.
