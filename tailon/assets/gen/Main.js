@@ -1,4 +1,66 @@
-var LogView = (function () {
+var TailonServer = /** @class */ (function () {
+    function TailonServer(apiURL, connectionRetries) {
+        var _this = this;
+        this.apiURL = apiURL;
+        this.connectionRetries = connectionRetries;
+        this.connectionMade = function () {
+            console.log('connected to backend');
+            _this.connected = true;
+            _this.socket.onmessage = _this.dataReceived;
+            _this.onConnect.trigger();
+        };
+        this.connectionLost = function () {
+            _this.onDisconnect.trigger();
+            if (_this.connected) {
+                _this.connected = false;
+                return;
+            }
+            _this.connected = false;
+            if (_this.connectionRetries === 0) {
+                return;
+            }
+            window.setTimeout(function () {
+                this.connectionRetries -= 1;
+                this.connect();
+            }, 1000);
+        };
+        this.dataReceived = function (message) {
+            var data = JSON.parse(message.data);
+            _this.onMessage.trigger(data);
+        };
+        this.sendMessage = function (message, retry) {
+            var connected = _this.connected;
+            var socket = _this.socket;
+            if (retry) {
+                (function () {
+                    if (connected) {
+                        socket.send(JSON.stringify(message));
+                    }
+                    else {
+                        window.setTimeout(arguments.callee, 20);
+                    }
+                })();
+            }
+            else {
+                if (!connected && !retry) {
+                    return;
+                }
+                socket.send(JSON.stringify(message));
+            }
+        };
+        this.connected = false;
+        this.onConnect = new Utils.Signal();
+        this.onDisconnect = new Utils.Signal();
+        this.onMessage = new Utils.Signal();
+    }
+    TailonServer.prototype.connect = function () {
+        this.socket = new SockJS(this.apiURL);
+        this.socket.onopen = this.connectionMade;
+        this.socket.onclose = this.connectionLost;
+    };
+    return TailonServer;
+}());
+var LogView = /** @class */ (function () {
     function LogView(backend, settings, container, logEntryClass, logNoticeClass) {
         this.backend = backend;
         this.settings = settings;
@@ -122,68 +184,6 @@ var LogView = (function () {
 //         $('#wrap_lines').prop('checked', this.model.get('wrap-lines'));
 //     },
 // });
-var TailonServer = (function () {
-    function TailonServer(apiURL, connectionRetries) {
-        var _this = this;
-        this.apiURL = apiURL;
-        this.connectionRetries = connectionRetries;
-        this.connectionMade = function () {
-            console.log('connected to backend');
-            _this.connected = true;
-            _this.socket.onmessage = _this.dataReceived;
-            _this.onConnect.trigger();
-        };
-        this.connectionLost = function () {
-            _this.onDisconnect.trigger();
-            if (_this.connected) {
-                _this.connected = false;
-                return;
-            }
-            _this.connected = false;
-            if (_this.connectionRetries === 0) {
-                return;
-            }
-            window.setTimeout(function () {
-                this.connectionRetries -= 1;
-                this.connect();
-            }, 1000);
-        };
-        this.dataReceived = function (message) {
-            var data = JSON.parse(message.data);
-            _this.onMessage.trigger(data);
-        };
-        this.sendMessage = function (message, retry) {
-            var connected = _this.connected;
-            var socket = _this.socket;
-            if (retry) {
-                (function () {
-                    if (connected) {
-                        socket.send(JSON.stringify(message));
-                    }
-                    else {
-                        window.setTimeout(arguments.callee, 20);
-                    }
-                })();
-            }
-            else {
-                if (!connected && !retry) {
-                    return;
-                }
-                socket.send(JSON.stringify(message));
-            }
-        };
-        this.connected = false;
-        this.onConnect = new Utils.Signal();
-        this.onDisconnect = new Utils.Signal();
-        this.onMessage = new Utils.Signal();
-    }
-    TailonServer.prototype.connect = function () {
-        this.socket = new SockJS(this.apiURL);
-        this.socket.onopen = this.connectionMade;
-        this.socket.onclose = this.connectionLost;
-    };
-    return TailonServer;
-}());
 var Utils;
 (function (Utils) {
     function formatBytes(size) {
@@ -240,7 +240,7 @@ var Utils;
         return res;
     }
     Utils.parseQueryString = parseQueryString;
-    var Signal = (function () {
+    var Signal = /** @class */ (function () {
         function Signal() {
             this.listeners = [];
         }
@@ -262,7 +262,7 @@ var Utils;
 /// <reference path="Utils.ts" />
 var Settings;
 (function (Settings_1) {
-    var Settings = (function () {
+    var Settings = /** @class */ (function () {
         function Settings(settings) {
             this.settings = settings;
             this.signals = {};
@@ -377,7 +377,7 @@ function onResize() {
 // // TODO: rate-limit this callback.
 $(window).resize(onResize);
 onResize();
-var FileSelect = (function () {
+var FileSelect = /** @class */ (function () {
     function FileSelect(selector, default_file) {
         var _this = this;
         this.refreshSelect = function () {
@@ -448,7 +448,7 @@ var FileSelect = (function () {
     };
     return FileSelect;
 }());
-var CommandSelect = (function () {
+var CommandSelect = /** @class */ (function () {
     function CommandSelect(selector, default_cmd) {
         this.$container = $(selector);
         var all_commands = window.clientConfig['commands'];
@@ -476,7 +476,7 @@ var CommandSelect = (function () {
     };
     return CommandSelect;
 }());
-var ActionBar = (function () {
+var ActionBar = /** @class */ (function () {
     function ActionBar(selector) {
         this.$container = $(selector);
         this.$downloadA = this.$container.find('.action-download');
@@ -509,7 +509,7 @@ var ActionBar = (function () {
     };
     return ActionBar;
 }());
-var MinimizedActionBar = (function () {
+var MinimizedActionBar = /** @class */ (function () {
     function MinimizedActionBar(selector) {
         this.$container = $(selector);
         this.$container.on('click', function () {
@@ -522,7 +522,7 @@ var MinimizedActionBar = (function () {
     }
     return MinimizedActionBar;
 }());
-var ScriptInput = (function () {
+var ScriptInput = /** @class */ (function () {
     function ScriptInput(selector, default_script) {
         var _this = this;
         this.onCommandChange = function (command) {
@@ -603,7 +603,8 @@ function changeFileModeScript() {
     logview.clearLines();
 }
 var query_string = Utils.parseQueryString(location.search);
-var default_file = 'file' in query_string ? query_string['file'][0] : null;
+var select_param = new URL(location.href).searchParams.get("select");
+var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
 var default_cmd = 'cmd' in query_string ? query_string['cmd'][0] : null;
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
