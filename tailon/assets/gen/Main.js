@@ -418,7 +418,7 @@ var FileSelect = /** @class */ (function () {
                 for (var j = 0; j < result[group_name].length; j++) {
                     _this.select.addOption({
                         value: result[group_name][j][0],
-                        text: result[group_name][j][0],
+                        text: result[group_name][j][0].replace(/^.*[\\\/]/, ''),
                         size: result[group_name][j][1],
                         mtime: result[group_name][j][2],
                         group: multiple_groups ? group_name : null
