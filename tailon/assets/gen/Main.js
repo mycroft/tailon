@@ -608,7 +608,7 @@ function changeFileModeScript() {
 var query_string = Utils.parseQueryString(location.search);
 var select_param = new URL(location.href).searchParams.get("select");
 var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
-var default_cmd = 'cmd' in query_string ? query_string['cmd'][0] : null;
+var default_cmd = settings.get('dirMode') ? "grep" : ('cmd' in query_string ? query_string['cmd'][0] : null);
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
 var action_bar = new ActionBar('#action-bar');
