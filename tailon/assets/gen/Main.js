@@ -434,9 +434,7 @@ var FileSelect = /** @class */ (function () {
             optgroupField: 'group'
         })[0].selectize;
         this.updateValues();
-        if (!default_file || !(default_file in this.select.options)) {
-            default_file = Object.keys(this.select.options)[0];
-        }
+        default_file = searchFilenameInPath(default_file, this.select.options);
         this.select.setValue(default_file);
         settings.set('currentFile', default_file);
         // TODO: This is an ugly work around for not being able to figure out
@@ -569,6 +567,21 @@ var ScriptInput = /** @class */ (function () {
     }
     return ScriptInput;
 }());
+function searchFilenameInPath(filename, list_paths) {
+    var filename_return = Object.keys(list_paths)[0];
+    if (filename in list_paths) {
+        filename_return = filename;
+    }
+    else {
+        for (var i = 0; i < Object.keys(list_paths).length; i++) {
+            if (filename == Object.keys(list_paths)[i].replace(/^.*[\\\/]/, '')) {
+                filename_return = Object.keys(list_paths)[i];
+                break;
+            }
+        }
+    }
+    return filename_return;
+}
 function changeFileModeScript() {
     var path = settings.get('currentFile');
     var command = settings.get('currentCommand');
