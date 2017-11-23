@@ -152,7 +152,7 @@ class FileSelect {
 
         this.updateValues();
 
-        default_file = searchFilenameInPath(default_file,this.select.options)
+        default_file = searchFilenameInPath(default_file,Object.keys(this.select.options))
 
         this.select.setValue(default_file);
         settings.set<string>('currentFile', default_file);
@@ -377,17 +377,15 @@ class ScriptInput {
 }
 
 function searchFilenameInPath(filename,list_paths){
-    var filename_return = Object.keys(list_paths)[0];
-    if(filename in list_paths){
-      filename_return = filename;
-    } else {
-        for(var i=0;i<Object.keys(list_paths).length;i++){
-            if(filename == Object.keys(list_paths)[i].replace(/^.*[\\\/]/, '')){
-                filename_return = Object.keys(list_paths)[i];
-                break;
-            }
+    var filename_return = list_paths[0];
+
+    for(var i=0;i<list_paths.length;i++){
+        if(filename == list_paths[i] || filename == list_paths[i].replace(/^.*[\\\/]/, '')){
+            filename_return = list_paths[i];
+            break;
         }
     }
+
     return filename_return;
 }
 
