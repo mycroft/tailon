@@ -217,7 +217,7 @@ class FileSelect {
             for (var j=0; j<result[group_name].length; j++) {
                 this.select.addOption({
                     value: result[group_name][j][0],
-                    text:  result[group_name][j][0],
+                    text:  result[group_name][j][0].replace(/^.*[\\\/]/, ''),
                     size:  result[group_name][j][1],
                     mtime: result[group_name][j][2],
                     group: multiple_groups ? group_name : null
@@ -426,7 +426,7 @@ function changeFileModeScript() {
 var query_string = Utils.parseQueryString(location.search);
 var select_param = new URL(location.href).searchParams.get("select");
 var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
-var default_cmd = 'cmd' in query_string ? query_string['cmd'][0] : null;
+var default_cmd = settings.get('dirMode') ? "grep" : ('cmd' in query_string ? query_string['cmd'][0] : null);
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
 
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
