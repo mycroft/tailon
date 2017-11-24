@@ -194,7 +194,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
 
         self.killall()
 
-        if 'tail' == command['command']:
+        if 'tail' == command['command'] and command['live-view']:
             n = command.get('tail-lines', self.initial_tail_lines)
             proc = self.cmd_control.tail(n, live_path, STREAM, STREAM)
             self.processes['tail'] = proc
@@ -209,7 +209,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             regex = command.get('script', '.*')
             log.debug('n = %s, path = %s, regex = %s' %(n, path, regex))
 
-            if command['live-view']:
+            if not command['live-view']:
                 proc_zcat, proc_grep = self.cmd_control.all_grep(path, regex, STREAM, STREAM)
             else:
                 proc_tail, proc_grep = self.cmd_control.tail_grep(n, live_path, regex, STREAM, STREAM)
@@ -224,7 +224,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             n = command.get('tail-lines', self.initial_tail_lines)
             script = command.get('script', '{print $0}')
 
-            if command['live-view']:
+            if not command['live-view']:
                 proc_zcat, proc_awk = self.cmd_control.all_awk(path, script, STREAM, STREAM)
             else:
                 proc_tail, proc_awk = self.cmd_control.tail_awk(n, live_path, script, STREAM, STREAM)
@@ -239,7 +239,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             n = command.get('tail-lines', self.initial_tail_lines)
             script = command.get('script', 's|.*|&|')
 
-            if command['live-view']:
+            if not command['live-view']:
                 proc_zcat, proc_sed = self.cmd-control.all_sed(path, script, STREAM, STREAM)
             else:
                 proc_tail, proc_sed = self.cmd_control.tail_sed(n, live_path, script, STREAM, STREAM)

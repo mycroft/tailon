@@ -31,7 +31,7 @@ let settings = new Settings.Settings({
     wrapLines: window.clientConfig['wrap-lines-initial'],
     linesOfHistory: 2000,  // 0 for infinite history.
     linesToTail: window.clientConfig['tail-lines-initial'],  // i.e. tail -n $linesToTail.
-    dirMode: window.clientConfig['live-view'],  // i.e. tail -n $linesToTail.
+    liveView: window.clientConfig['live-view-initial'],
 
     currentCommand: null,
     currentFile: null,
@@ -106,6 +106,10 @@ var watch_options = {
 $('#history-lines').typeWatch(watch_options);
 $('#tail-lines').typeWatch(watch_options);
 
+$('#live-view').click(function() {
+    settings.set<boolean>('liveView', this.checked);
+});
+
 $('#wrap-lines').click(function() {
     settings.set<boolean>('wrapLines', this.checked);
 });
@@ -120,6 +124,8 @@ settings.onChange('wrapLines', function(value) {
 
 // Set initial state of "Wrap Lines" checkbox.
 $('#wrap-lines').attr('checked', settings.get('wrapLines'))
+
+$('#live-view').attr('checked', settings.get('liveView'))
 
 // Set initial line-wrapping state of log-view spans.
 logview.toggleWrapLines()
@@ -410,7 +416,7 @@ function changeFileModeScript() {
         'path': path,
         'script': script,
         'tail-lines': settings.get<number>('linesToTail'),
-        'live-view': settings.get<boolean>('dirMode')
+        'live-view': settings.get('liveView'),
     };
 
     // Don't do anything if the current message is the same as the
@@ -436,9 +442,9 @@ function changeFileModeScript() {
 
 
 var query_string = Utils.parseQueryString(location.search);
-var select_param = new URL(location.href).searchParams.get("select");
+var select_param = new URL(location.href).searchParams.get("app");
 var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
-var default_cmd = settings.get('dirMode') ? "grep" : ('cmd' in query_string ? query_string['cmd'][0] : null);
+var default_cmd = settings.get('liveView') ? ('cmd' in query_string ? query_string['cmd'][0] : null) : 'grep';
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
 
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
@@ -451,6 +457,7 @@ var script_input = new ScriptInput('#script-input', default_script);
 settings.onChange('currentFile', changeFileModeScript);
 settings.onChange('currentCommand', changeFileModeScript);
 settings.onChange('currentScript', changeFileModeScript);
+settings.onChange('liveView', changeFileModeScript);
 
 // Start showing the first file as soon as we're connected.
 backend.onConnect.addCallback(changeFileModeScript);
