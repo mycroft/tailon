@@ -31,7 +31,7 @@ let settings = new Settings.Settings({
     wrapLines: window.clientConfig['wrap-lines-initial'],
     linesOfHistory: 2000,  // 0 for infinite history.
     linesToTail: window.clientConfig['tail-lines-initial'],  // i.e. tail -n $linesToTail.
-    dirMode: window.clientConfig['dir-mode'],  // i.e. tail -n $linesToTail.
+    dirMode: window.clientConfig['live-view'],  // i.e. tail -n $linesToTail.
 
     currentCommand: null,
     currentFile: null,
@@ -184,7 +184,7 @@ class FileSelect {
         };
 
         $.ajax({
-            url: 'files/check', type: 'GET', async: false,
+            url: 'dirs/check', type: 'GET', async: false,
             success: check,
         });
     }
@@ -193,7 +193,7 @@ class FileSelect {
         this.select.clearOptions();
         this.select.clearOptionGroups();
 
-        var urlReq = settings.get('dirMode') ? "dirs" : "files";
+        var urlReq = "dirs";
 
         $.ajax({
             url: urlReq, type: 'GET', async: false,
@@ -410,7 +410,7 @@ function changeFileModeScript() {
         'path': path,
         'script': script,
         'tail-lines': settings.get<number>('linesToTail'),
-        'dir-mode': settings.get<boolean>('dirMode')
+        'live-view': settings.get<boolean>('dirMode')
     };
 
     // Don't do anything if the current message is the same as the
