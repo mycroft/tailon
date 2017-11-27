@@ -57,7 +57,7 @@ class CommandControl:
         return proc
 
     def sift(self, regex, fn, stdout, stderr, **kw):
-        cmd = [self.toolpaths.cmd_sift, '--zip','--binary-skip', '--no-color','--recursive', '-e', regex]
+        cmd = [self.toolpaths.cmd_sift, '--zip','--binary-skip', '--no-color','--recursive', '--no-filename', '-e', regex]
         if fn:
             cmd.append(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, **kw)
@@ -74,7 +74,7 @@ class CommandControl:
 
     def tail(self, n, fn, stdout, stderr, **kw):
         flag_follow = '-F' if self.follow_names else '-f'
-        cmd = [self.toolpaths.cmd_tail, '-n', str(n), flag_follow, *fn]
+        cmd = [self.toolpaths.cmd_tail, '--silent', '-n', str(n), flag_follow, *fn]
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, bufsize=1, **kw)
         log.debug('running tail %s, pid: %s', cmd, proc.proc.pid)
         return proc
