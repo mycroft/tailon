@@ -52,6 +52,14 @@ div #command-select {
   min-width: 80px;
 }
 
+div #live-view-wrapper {
+  color: #c5c8c6;
+  line-height: 200%;
+  background-color: #373b41;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
 #script-input {
   box-sizing: border-box;
   box-shadow: 2px 2px 2px 0px darken($tailon-toolbar-input-background-color, 10%);

@@ -20,6 +20,12 @@
             <div><i class='icon-code'></i></div>
         </div>
     </div>
+    <div class='toolbar-item'>
+        <div id="live-view-wrapper" tabindex='4'>
+          <label for="live-view">Live view:</label>
+          <input type="checkbox" name="live-view" id="live-view" checked>
+        </div>
+    </div>
 
     <div class='toolbar-item' tabindex='4'>
         <div class='button-group' id='action-bar'>
@@ -41,10 +47,6 @@
 
 <div id="configuration">
     <form>
-        <p>
-            <label for="live-view">Live view:</label>
-            <input type="checkbox" name="live-view" id="live-view" checked>
-        </p>
         <p>
             <label for="history-lines">Scrollback lines:</label>
             <input type="number" name="history-lines" id="history-lines", min="0", value="2000">
