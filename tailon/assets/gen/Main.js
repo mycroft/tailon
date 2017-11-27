@@ -585,6 +585,7 @@ function changeFileModeScript() {
     var path = settings.get('currentFile');
     var command = settings.get('currentCommand');
     var script = settings.get('currentScript');
+    console.log("command: " + command);
     if (path === null || path === '') {
         return;
     }
@@ -620,15 +621,17 @@ function changeFileModeScript() {
 var query_string = Utils.parseQueryString(location.search);
 var select_param = new URL(location.href).searchParams.get("app");
 var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
-var default_cmd = settings.get('liveView') ? ('cmd' in query_string ? query_string['cmd'][0] : null) : 'grep';
+var default_cmd = 'grep';
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
+console.log("Default command: " + default_cmd);
+settings.set('currentCommand', default_cmd);
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
 var action_bar = new ActionBar('#action-bar');
-var cmd_select = new CommandSelect('#command-select select', default_cmd);
+// var cmd_select = new CommandSelect('#command-select select', default_cmd);
 var file_select = new FileSelect('#file-select select', default_file);
 var script_input = new ScriptInput('#script-input', default_script);
 settings.onChange('currentFile', changeFileModeScript);
-settings.onChange('currentCommand', changeFileModeScript);
+// settings.onChange('currentCommand', changeFileModeScript);
 settings.onChange('currentScript', changeFileModeScript);
 settings.onChange('liveView', changeFileModeScript);
 // Start showing the first file as soon as we're connected.
