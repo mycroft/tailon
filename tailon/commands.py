@@ -15,10 +15,11 @@ class ToolPaths:
     command_names = {'grep', 'awk', 'sed', 'tail'}
 
     def __init__(self, overwrites=None):
-        self.cmd_grep = self.first_in_path('grep')
-        self.cmd_awk  = self.first_in_path('gawk', 'awk')
-        self.cmd_sed  = self.first_in_path('gsed', 'sed')
-        self.cmd_tail = self.first_in_path('gtail', 'tail')
+        self.cmd_grep  = self.first_in_path('grep')
+        self.cmd_awk   = self.first_in_path('gawk', 'awk')
+        self.cmd_sed   = self.first_in_path('gsed', 'sed')
+        self.cmd_tail  = self.first_in_path('gtail', 'tail')
+        self.cmd_zcat  = self.first_in_path('zcat')
 
 
         if overwrites:
@@ -64,9 +65,15 @@ class CommandControl:
 
     def tail(self, n, fn, stdout, stderr, **kw):
         flag_follow = '-F' if self.follow_names else '-f'
-        cmd = [self.toolpaths.cmd_tail, '-n', str(n), flag_follow, fn]
+        cmd = [self.toolpaths.cmd_tail, '-n', str(n), flag_follow, *fn]
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, bufsize=1, **kw)
         log.debug('running tail %s, pid: %s', cmd, proc.proc.pid)
+        return proc
+
+    def zcat(self, fn, stdout, stderr, **kw):
+        cmd = [self.toolpaths.cmd_zcat, '-f', '-r', fn]
+        proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, bufsize=1, **kw)
+        log.debug('running zcat %s, pid: %s', cmd, proc.proc.pid)
         return proc
 
     def tail_awk(self, n, fn, script, stdout, stderr):
@@ -85,3 +92,18 @@ class CommandControl:
         sed = self.sed(script, None, stdout=STREAM, stderr=STREAM, stdin=tail.stdout)
         tail.stdout.close()
         return tail, sed
+    def all_awk(self, fn, script, stdout, stderr):
+        zcat = self.zcat(fn, stdout=subprocess.PIPE, stderr=STREAM)
+        awk = self.awk(script, None, stdout=STREAM, stderr=STREAM, stdin=zcat.stdout)
+        return zcat, awk
+
+    def all_grep(self, fn, regex, stdout, stderr):
+        zcat = self.zcat(fn, stdout=subprocess.PIPE, stderr=STREAM)
+        grep = self.grep(regex, None, stdout=STREAM, stderr=STREAM, stdin=zcat.stdout)
+        return zcat, grep
+
+    def all_sed(self, fn, script, stdout, stderr):
+        zcat = self.zcat(fn, stdout=subprocess.PIPE, stderr=STREAM)
+        sed = self.sed(script, None, stdout=STREAM, stderr=STREAM, stdin=zcat.stdout)
+        tail.stdout.close()
+        return zcat, sed

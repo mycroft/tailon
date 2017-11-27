@@ -7,6 +7,7 @@ module Settings {
         panelHidden: boolean,
         numTailLines: boolean,
 
+        liveView: boolean,
         wrapLines: boolean,
         linesOfHistory: number,
         linesToTail: number,

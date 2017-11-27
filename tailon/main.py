@@ -71,7 +71,8 @@ def parseconfig(cfg):
         'http-auth':       raw_config.get('http-auth', False),
         'users':           raw_config.get('users', {}),
         'wrap-lines':      raw_config.get('wrap-lines', True),
-        'tail-lines':      raw_config.get('tail-lines', 10)
+        'tail-lines':      raw_config.get('tail-lines', 10),
+        'live-view':       raw_config.get('live-view', False),
     }
 
     if 'files' not in raw_config or not len(raw_config['files']):
@@ -116,6 +117,7 @@ def parseopts(args=None):
       commands: [tail, grep]  # allowed commands
       tail-lines: 10          # number of lines to tail initially
       wrap-lines: true        # initial line-wrapping state
+      live-view: False        # view files live (tail) or just search in files
 
       files:
         - '/var/log/messages'
@@ -158,6 +160,7 @@ def parseopts(args=None):
     arg('-h', '--help', action='help', help='show this help message and exit')
     arg('-d', '--debug', action='store_true', help='show debug messages')
     arg('-v', '--version', action='version', version='tailon version %s' % __version__)
+    arg('-L', '--live-view', action='store_true', help='Do we monitor files or directories')
 
     arg('--output-encoding', dest='output_encoding', metavar='enc',
         help="encoding for output")
@@ -212,6 +215,7 @@ def setup(opts):
         'debug': opts.__dict__.get('debug', False),
         'tail-lines': opts.__dict__.get('tail_lines', 10),
         'wrap-lines': opts.__dict__.get('wrap-lines', True),
+        'live-view': opts.__dict__.get('dir_mode', False),
     }
 
     if config['follow-names']:
@@ -288,6 +292,7 @@ def main(argv=sys.argv):
         # refresh the filelist every time the file select element is focused.
         'refresh_filelist': bool(file_lister.all_dir_names),
         'commands': config['commands'],
+        'live-view-initial': config['live-view'],
     }
 
     template_dir, assets_dir = get_resource_dirs()

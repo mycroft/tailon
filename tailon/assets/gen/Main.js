@@ -1,4 +1,168 @@
-var LogView = (function () {
+var Utils;
+(function (Utils) {
+    function formatBytes(size) {
+        var units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        var i = 0;
+        while (size >= 1024) {
+            size /= 1024;
+            ++i;
+        }
+        return size.toFixed(1) + ' ' + units[i];
+    }
+    Utils.formatBytes = formatBytes;
+    function formatFilename(state) {
+        if (!state.id)
+            return state.text;
+        var size = formatBytes($(state.element).data('size'));
+        return '<span>' + state.text + '</span>' + '<span style="float:right;">' + size + '</span>';
+    }
+    Utils.formatFilename = formatFilename;
+    function endsWith(str, suffix) {
+        return str.indexOf(suffix, str.length - suffix.length) !== -1;
+    }
+    Utils.endsWith = endsWith;
+    function startsWith(str, prefix) {
+        return str.indexOf(prefix) === 0;
+    }
+    Utils.startsWith = startsWith;
+    var escape_entity_map = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "/": '&#x2F;'
+    };
+    // This is the escapeHtml function from mustache.js.
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>\/]/g, function (s) {
+            return escape_entity_map[s];
+        });
+    }
+    Utils.escapeHtml = escapeHtml;
+    function parseQueryString(str) {
+        var res = {};
+        str.substr(1).split('&').forEach(function (item) {
+            var el = item.split("=");
+            var key = el[0];
+            var value = el[1] && decodeURIComponent(el[1]);
+            if (key in res) {
+                res[key].push(value);
+            }
+            else {
+                res[key] = [value];
+            }
+        });
+        return res;
+    }
+    Utils.parseQueryString = parseQueryString;
+    var Signal = /** @class */ (function () {
+        function Signal() {
+            this.listeners = [];
+        }
+        Signal.prototype.addCallback = function (callback) {
+            this.listeners.push(callback);
+        };
+        Signal.prototype.removeObserver = function (observer) {
+            this.listeners.splice(this.listeners.indexOf(observer), 1);
+        };
+        Signal.prototype.trigger = function (data) {
+            this.listeners.forEach(function (callback) {
+                callback(data);
+            });
+        };
+        return Signal;
+    }());
+    Utils.Signal = Signal;
+})(Utils || (Utils = {}));
+/// <reference path="Utils.ts" />
+var Settings;
+(function (Settings_1) {
+    var Settings = /** @class */ (function () {
+        function Settings(settings) {
+            this.settings = settings;
+            this.signals = {};
+            var keys = Object.keys(this.settings);
+            for (var i = 0; i < keys.length; i++) {
+                this.signals[keys[i]] = new Utils.Signal();
+            }
+        }
+        Settings.prototype.onChange = function (name, callback) {
+            this.signals[name].addCallback(callback);
+        };
+        Settings.prototype.set = function (key, value) {
+            console.log('settings key "' + key + '" set to "' + value + '"');
+            this.settings[key] = value;
+            this.signals[key].trigger(value);
+        };
+        Settings.prototype.get = function (key) {
+            return this.settings[key];
+        };
+        return Settings;
+    }());
+    Settings_1.Settings = Settings;
+})(Settings || (Settings = {}));
+var TailonServer = /** @class */ (function () {
+    function TailonServer(apiURL, connectionRetries) {
+        var _this = this;
+        this.apiURL = apiURL;
+        this.connectionRetries = connectionRetries;
+        this.connectionMade = function () {
+            console.log('connected to backend');
+            _this.connected = true;
+            _this.socket.onmessage = _this.dataReceived;
+            _this.onConnect.trigger();
+        };
+        this.connectionLost = function () {
+            _this.onDisconnect.trigger();
+            if (_this.connected) {
+                _this.connected = false;
+                return;
+            }
+            _this.connected = false;
+            if (_this.connectionRetries === 0) {
+                return;
+            }
+            window.setTimeout(function () {
+                this.connectionRetries -= 1;
+                this.connect();
+            }, 1000);
+        };
+        this.dataReceived = function (message) {
+            var data = JSON.parse(message.data);
+            _this.onMessage.trigger(data);
+        };
+        this.sendMessage = function (message, retry) {
+            var connected = _this.connected;
+            var socket = _this.socket;
+            if (retry) {
+                (function () {
+                    if (connected) {
+                        socket.send(JSON.stringify(message));
+                    }
+                    else {
+                        window.setTimeout(arguments.callee, 20);
+                    }
+                })();
+            }
+            else {
+                if (!connected && !retry) {
+                    return;
+                }
+                socket.send(JSON.stringify(message));
+            }
+        };
+        this.connected = false;
+        this.onConnect = new Utils.Signal();
+        this.onDisconnect = new Utils.Signal();
+        this.onMessage = new Utils.Signal();
+    }
+    TailonServer.prototype.connect = function () {
+        this.socket = new SockJS(this.apiURL);
+        this.socket.onopen = this.connectionMade;
+        this.socket.onclose = this.connectionLost;
+    };
+    return TailonServer;
+}());
+var LogView = /** @class */ (function () {
     function LogView(backend, settings, container, logEntryClass, logNoticeClass) {
         this.backend = backend;
         this.settings = settings;
@@ -122,170 +286,6 @@ var LogView = (function () {
 //         $('#wrap_lines').prop('checked', this.model.get('wrap-lines'));
 //     },
 // });
-var TailonServer = (function () {
-    function TailonServer(apiURL, connectionRetries) {
-        var _this = this;
-        this.apiURL = apiURL;
-        this.connectionRetries = connectionRetries;
-        this.connectionMade = function () {
-            console.log('connected to backend');
-            _this.connected = true;
-            _this.socket.onmessage = _this.dataReceived;
-            _this.onConnect.trigger();
-        };
-        this.connectionLost = function () {
-            _this.onDisconnect.trigger();
-            if (_this.connected) {
-                _this.connected = false;
-                return;
-            }
-            _this.connected = false;
-            if (_this.connectionRetries === 0) {
-                return;
-            }
-            window.setTimeout(function () {
-                this.connectionRetries -= 1;
-                this.connect();
-            }, 1000);
-        };
-        this.dataReceived = function (message) {
-            var data = JSON.parse(message.data);
-            _this.onMessage.trigger(data);
-        };
-        this.sendMessage = function (message, retry) {
-            var connected = _this.connected;
-            var socket = _this.socket;
-            if (retry) {
-                (function () {
-                    if (connected) {
-                        socket.send(JSON.stringify(message));
-                    }
-                    else {
-                        window.setTimeout(arguments.callee, 20);
-                    }
-                })();
-            }
-            else {
-                if (!connected && !retry) {
-                    return;
-                }
-                socket.send(JSON.stringify(message));
-            }
-        };
-        this.connected = false;
-        this.onConnect = new Utils.Signal();
-        this.onDisconnect = new Utils.Signal();
-        this.onMessage = new Utils.Signal();
-    }
-    TailonServer.prototype.connect = function () {
-        this.socket = new SockJS(this.apiURL);
-        this.socket.onopen = this.connectionMade;
-        this.socket.onclose = this.connectionLost;
-    };
-    return TailonServer;
-}());
-var Utils;
-(function (Utils) {
-    function formatBytes(size) {
-        var units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-        var i = 0;
-        while (size >= 1024) {
-            size /= 1024;
-            ++i;
-        }
-        return size.toFixed(1) + ' ' + units[i];
-    }
-    Utils.formatBytes = formatBytes;
-    function formatFilename(state) {
-        if (!state.id)
-            return state.text;
-        var size = formatBytes($(state.element).data('size'));
-        return '<span>' + state.text + '</span>' + '<span style="float:right;">' + size + '</span>';
-    }
-    Utils.formatFilename = formatFilename;
-    function endsWith(str, suffix) {
-        return str.indexOf(suffix, str.length - suffix.length) !== -1;
-    }
-    Utils.endsWith = endsWith;
-    function startsWith(str, prefix) {
-        return str.indexOf(prefix) === 0;
-    }
-    Utils.startsWith = startsWith;
-    var escape_entity_map = {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "/": '&#x2F;'
-    };
-    // This is the escapeHtml function from mustache.js.
-    function escapeHtml(str) {
-        return String(str).replace(/[&<>\/]/g, function (s) {
-            return escape_entity_map[s];
-        });
-    }
-    Utils.escapeHtml = escapeHtml;
-    function parseQueryString(str) {
-        var res = {};
-        str.substr(1).split('&').forEach(function (item) {
-            var el = item.split("=");
-            var key = el[0];
-            var value = el[1] && decodeURIComponent(el[1]);
-            if (key in res) {
-                res[key].push(value);
-            }
-            else {
-                res[key] = [value];
-            }
-        });
-        return res;
-    }
-    Utils.parseQueryString = parseQueryString;
-    var Signal = (function () {
-        function Signal() {
-            this.listeners = [];
-        }
-        Signal.prototype.addCallback = function (callback) {
-            this.listeners.push(callback);
-        };
-        Signal.prototype.removeObserver = function (observer) {
-            this.listeners.splice(this.listeners.indexOf(observer), 1);
-        };
-        Signal.prototype.trigger = function (data) {
-            this.listeners.forEach(function (callback) {
-                callback(data);
-            });
-        };
-        return Signal;
-    }());
-    Utils.Signal = Signal;
-})(Utils || (Utils = {}));
-/// <reference path="Utils.ts" />
-var Settings;
-(function (Settings_1) {
-    var Settings = (function () {
-        function Settings(settings) {
-            this.settings = settings;
-            this.signals = {};
-            var keys = Object.keys(this.settings);
-            for (var i = 0; i < keys.length; i++) {
-                this.signals[keys[i]] = new Utils.Signal();
-            }
-        }
-        Settings.prototype.onChange = function (name, callback) {
-            this.signals[name].addCallback(callback);
-        };
-        Settings.prototype.set = function (key, value) {
-            console.log('settings key "' + key + '" set to "' + value + '"');
-            this.settings[key] = value;
-            this.signals[key].trigger(value);
-        };
-        Settings.prototype.get = function (key) {
-            return this.settings[key];
-        };
-        return Settings;
-    }());
-    Settings_1.Settings = Settings;
-})(Settings || (Settings = {}));
 // global $:false, jQuery:false
 // jshint laxcomma: true, sub: true
 /// <reference path="../vendor/typings/jquery.d.ts" />
@@ -304,6 +304,7 @@ var settings = new Settings.Settings({
     wrapLines: window.clientConfig['wrap-lines-initial'],
     linesOfHistory: 2000,
     linesToTail: window.clientConfig['tail-lines-initial'],
+    liveView: window.clientConfig['live-view-initial'],
     currentCommand: null,
     currentFile: null,
     currentScript: null,
@@ -356,6 +357,9 @@ var watch_options = {
 };
 $('#history-lines').typeWatch(watch_options);
 $('#tail-lines').typeWatch(watch_options);
+$('#live-view').click(function () {
+    settings.set('liveView', this.checked);
+});
 $('#wrap-lines').click(function () {
     settings.set('wrapLines', this.checked);
 });
@@ -367,6 +371,7 @@ settings.onChange('wrapLines', function (value) {
 });
 // Set initial state of "Wrap Lines" checkbox.
 $('#wrap-lines').attr('checked', settings.get('wrapLines'));
+$('#live-view').attr('checked', settings.get('liveView'));
 // Set initial line-wrapping state of log-view spans.
 logview.toggleWrapLines();
 function onResize() {
@@ -377,7 +382,7 @@ function onResize() {
 // // TODO: rate-limit this callback.
 $(window).resize(onResize);
 onResize();
-var FileSelect = (function () {
+var FileSelect = /** @class */ (function () {
     function FileSelect(selector, default_file) {
         var _this = this;
         this.refreshSelect = function () {
@@ -392,15 +397,16 @@ var FileSelect = (function () {
             }
             ;
             $.ajax({
-                url: 'files/check', type: 'GET', async: false,
+                url: 'dirs/check', type: 'GET', async: false,
                 success: check
             });
         };
         this.updateValues = function () {
             _this.select.clearOptions();
             _this.select.clearOptionGroups();
+            var urlReq = "dirs";
             $.ajax({
-                url: 'files', type: 'GET', async: false,
+                url: urlReq, type: 'GET', async: false,
                 success: _this.listFilesSuccess
             });
         };
@@ -416,7 +422,7 @@ var FileSelect = (function () {
                 for (var j = 0; j < result[group_name].length; j++) {
                     _this.select.addOption({
                         value: result[group_name][j][0],
-                        text: result[group_name][j][0],
+                        text: result[group_name][j][0].replace(/^.*[\\\/]/, ''),
                         size: result[group_name][j][1],
                         mtime: result[group_name][j][2],
                         group: multiple_groups ? group_name : null
@@ -432,9 +438,7 @@ var FileSelect = (function () {
             optgroupField: 'group'
         })[0].selectize;
         this.updateValues();
-        if (!default_file || !(default_file in this.select.options)) {
-            default_file = Object.keys(this.select.options)[0];
-        }
+        default_file = searchFilenameInPath(default_file, Object.keys(this.select.options));
         this.select.setValue(default_file);
         settings.set('currentFile', default_file);
         // TODO: This is an ugly work around for not being able to figure out
@@ -448,7 +452,7 @@ var FileSelect = (function () {
     };
     return FileSelect;
 }());
-var CommandSelect = (function () {
+var CommandSelect = /** @class */ (function () {
     function CommandSelect(selector, default_cmd) {
         this.$container = $(selector);
         var all_commands = window.clientConfig['commands'];
@@ -476,7 +480,7 @@ var CommandSelect = (function () {
     };
     return CommandSelect;
 }());
-var ActionBar = (function () {
+var ActionBar = /** @class */ (function () {
     function ActionBar(selector) {
         this.$container = $(selector);
         this.$downloadA = this.$container.find('.action-download');
@@ -509,7 +513,7 @@ var ActionBar = (function () {
     };
     return ActionBar;
 }());
-var MinimizedActionBar = (function () {
+var MinimizedActionBar = /** @class */ (function () {
     function MinimizedActionBar(selector) {
         this.$container = $(selector);
         this.$container.on('click', function () {
@@ -522,7 +526,7 @@ var MinimizedActionBar = (function () {
     }
     return MinimizedActionBar;
 }());
-var ScriptInput = (function () {
+var ScriptInput = /** @class */ (function () {
     function ScriptInput(selector, default_script) {
         var _this = this;
         this.onCommandChange = function (command) {
@@ -567,6 +571,16 @@ var ScriptInput = (function () {
     }
     return ScriptInput;
 }());
+function searchFilenameInPath(filename, list_paths) {
+    var filename_return = list_paths[0];
+    for (var i = 0; i < list_paths.length; i++) {
+        if (filename == list_paths[i] || filename == list_paths[i].replace(/^.*[\\\/]/, '')) {
+            filename_return = list_paths[i];
+            break;
+        }
+    }
+    return filename_return;
+}
 function changeFileModeScript() {
     var path = settings.get('currentFile');
     var command = settings.get('currentCommand');
@@ -583,7 +597,8 @@ function changeFileModeScript() {
         'command': command,
         'path': path,
         'script': script,
-        'tail-lines': settings.get('linesToTail')
+        'tail-lines': settings.get('linesToTail'),
+        'live-view': settings.get('liveView')
     };
     // Don't do anything if the current message is the same as the
     // previous message.
@@ -603,8 +618,9 @@ function changeFileModeScript() {
     logview.clearLines();
 }
 var query_string = Utils.parseQueryString(location.search);
-var default_file = 'file' in query_string ? query_string['file'][0] : null;
-var default_cmd = 'cmd' in query_string ? query_string['cmd'][0] : null;
+var select_param = new URL(location.href).searchParams.get("app");
+var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
+var default_cmd = settings.get('liveView') ? ('cmd' in query_string ? query_string['cmd'][0] : null) : 'grep';
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
 var action_bar = new ActionBar('#action-bar');
@@ -614,6 +630,7 @@ var script_input = new ScriptInput('#script-input', default_script);
 settings.onChange('currentFile', changeFileModeScript);
 settings.onChange('currentCommand', changeFileModeScript);
 settings.onChange('currentScript', changeFileModeScript);
+settings.onChange('liveView', changeFileModeScript);
 // Start showing the first file as soon as we're connected.
 backend.onConnect.addCallback(changeFileModeScript);
 //# sourceMappingURL=Main.js.map

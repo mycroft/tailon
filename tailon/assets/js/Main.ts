@@ -31,6 +31,7 @@ let settings = new Settings.Settings({
     wrapLines: window.clientConfig['wrap-lines-initial'],
     linesOfHistory: 2000,  // 0 for infinite history.
     linesToTail: window.clientConfig['tail-lines-initial'],  // i.e. tail -n $linesToTail.
+    liveView: window.clientConfig['live-view-initial'],
 
     currentCommand: null,
     currentFile: null,
@@ -105,6 +106,10 @@ var watch_options = {
 $('#history-lines').typeWatch(watch_options);
 $('#tail-lines').typeWatch(watch_options);
 
+$('#live-view').click(function() {
+    settings.set<boolean>('liveView', this.checked);
+});
+
 $('#wrap-lines').click(function() {
     settings.set<boolean>('wrapLines', this.checked);
 });
@@ -119,6 +124,8 @@ settings.onChange('wrapLines', function(value) {
 
 // Set initial state of "Wrap Lines" checkbox.
 $('#wrap-lines').attr('checked', settings.get('wrapLines'))
+
+$('#live-view').attr('checked', settings.get('liveView'))
 
 // Set initial line-wrapping state of log-view spans.
 logview.toggleWrapLines()
@@ -151,9 +158,7 @@ class FileSelect {
 
         this.updateValues();
 
-        if (! default_file || ! (default_file in this.select.options)) {
-            default_file = Object.keys(this.select.options)[0];
-        }
+        default_file = searchFilenameInPath(default_file,Object.keys(this.select.options))
 
         this.select.setValue(default_file);
         settings.set<string>('currentFile', default_file);
@@ -185,7 +190,7 @@ class FileSelect {
         };
 
         $.ajax({
-            url: 'files/check', type: 'GET', async: false,
+            url: 'dirs/check', type: 'GET', async: false,
             success: check,
         });
     }
@@ -194,8 +199,10 @@ class FileSelect {
         this.select.clearOptions();
         this.select.clearOptionGroups();
 
+        var urlReq = "dirs";
+
         $.ajax({
-            url: 'files', type: 'GET', async: false,
+            url: urlReq, type: 'GET', async: false,
             success: this.listFilesSuccess
         });
     }
@@ -214,7 +221,7 @@ class FileSelect {
             for (var j=0; j<result[group_name].length; j++) {
                 this.select.addOption({
                     value: result[group_name][j][0],
-                    text:  result[group_name][j][0],
+                    text:  result[group_name][j][0].replace(/^.*[\\\/]/, ''),
                     size:  result[group_name][j][1],
                     mtime: result[group_name][j][2],
                     group: multiple_groups ? group_name : null
@@ -375,6 +382,20 @@ class ScriptInput {
     }
 }
 
+function searchFilenameInPath(filename,list_paths){
+    var filename_return = list_paths[0];
+
+    for(var i=0;i<list_paths.length;i++){
+        if(filename == list_paths[i] || filename == list_paths[i].replace(/^.*[\\\/]/, '')){
+            filename_return = list_paths[i];
+            break;
+        }
+    }
+
+    return filename_return;
+}
+
+
 function changeFileModeScript() {
     var path = settings.get<string>('currentFile');
     var command = settings.get<string>('currentCommand');
@@ -394,7 +415,8 @@ function changeFileModeScript() {
         'command': command,
         'path': path,
         'script': script,
-        'tail-lines': settings.get<number>('linesToTail')
+        'tail-lines': settings.get<number>('linesToTail'),
+        'live-view': settings.get('liveView'),
     };
 
     // Don't do anything if the current message is the same as the
@@ -420,8 +442,9 @@ function changeFileModeScript() {
 
 
 var query_string = Utils.parseQueryString(location.search);
-var default_file = 'file' in query_string ? query_string['file'][0] : null;
-var default_cmd = 'cmd' in query_string ? query_string['cmd'][0] : null;
+var select_param = new URL(location.href).searchParams.get("app");
+var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
+var default_cmd = settings.get('liveView') ? ('cmd' in query_string ? query_string['cmd'][0] : null) : 'grep';
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
 
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
@@ -434,6 +457,7 @@ var script_input = new ScriptInput('#script-input', default_script);
 settings.onChange('currentFile', changeFileModeScript);
 settings.onChange('currentCommand', changeFileModeScript);
 settings.onChange('currentScript', changeFileModeScript);
+settings.onChange('liveView', changeFileModeScript);
 
 // Start showing the first file as soon as we're connected.
 backend.onConnect.addCallback(changeFileModeScript);
