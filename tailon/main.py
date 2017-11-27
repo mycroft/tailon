@@ -304,5 +304,6 @@ def main(argv=sys.argv):
         config, client_config, template_dir, assets_dir,
         file_lister=file_lister,
         cmd_control=cmd_control,
+        toolpaths = toolpaths,
     )
     start_server(application, config, client_config)

@@ -107,6 +107,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         self.config = self.application.config
         self.file_lister = self.application.file_lister
         self.cmd_control = self.application.cmd_control
+        self.toolpaths = self.application.toolpaths
         self.initial_tail_lines = self.config['tail-lines']
 
         self.last_stdout_line = []
@@ -209,9 +210,11 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             regex = command.get('script', '.*')
             log.debug('n = %s, path = %s, regex = %s' %(n, path, regex))
 
-            if not command['live-view']:
+            if not command['live-view'] and self.toolpaths.cmd_sift:
+                proc_grep = self.cmd_control.all_grep(path, regex, STREAM, STREAM)
+            elif not command['live-view'] and not self.toolpaths.cmd_sift:
                 proc_zcat, proc_grep = self.cmd_control.all_grep(path, regex, STREAM, STREAM)
-            else:
+            elif command['live-view']:
                 proc_tail, proc_grep = self.cmd_control.tail_grep(n, live_path, regex, STREAM, STREAM)
             self.processes['grep'] = proc_grep
 
@@ -299,6 +302,8 @@ class TailonApplication(BaseApplication):
     def __init__(self, *args, **kw):
         self.file_lister = kw.pop('file_lister')
         self.cmd_control = kw.pop('cmd_control')
+        self.toolpaths = kw.pop('toolpaths')
+        log.debug('============== %s' %self.toolpaths)
         super(TailonApplication, self).__init__(*args, **kw)
 
     def enable_authentication(self, auth_type):
