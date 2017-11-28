@@ -510,7 +510,7 @@ var ActionBar = /** @class */ (function () {
         });
     }
     ActionBar.prototype.updateDownloadLink = function (file) {
-        this.$downloadA.attr('href', settings.get('dlURL') + '?app=' + file);
+        this.$downloadA.attr('href', settings.get('dlURL') + '?app=' + file.replace(/^.*[\\\/]/, ''));
     };
     return ActionBar;
 }());

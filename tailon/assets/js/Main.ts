@@ -304,7 +304,7 @@ class ActionBar {
     }
 
     updateDownloadLink(file: string) {
-        this.$downloadA.attr('href', settings.get('dlURL') + '?app=' + file);
+        this.$downloadA.attr('href', settings.get('dlURL') + '?app=' + file.replace(/^.*[\\\/]/, ''));
     }
 }
 
