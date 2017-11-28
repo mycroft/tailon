@@ -73,6 +73,7 @@ def parseconfig(cfg):
         'wrap-lines':      raw_config.get('wrap-lines', True),
         'tail-lines':      raw_config.get('tail-lines', 10),
         'live-view':       raw_config.get('live-view', False),
+        'download-url':    raw_config.get('download-url', None),
     }
 
     if 'files' not in raw_config or not len(raw_config['files']):
@@ -161,6 +162,7 @@ def parseopts(args=None):
     arg('-d', '--debug', action='store_true', help='show debug messages')
     arg('-v', '--version', action='version', version='tailon version %s' % __version__)
     arg('-L', '--live-view', action='store_true', help='Do we monitor files or directories')
+    arg('--download-url', dest='download-url', default=None, help='url to download files')
 
     arg('--output-encoding', dest='output_encoding', metavar='enc',
         help="encoding for output")
@@ -215,7 +217,8 @@ def setup(opts):
         'debug': opts.__dict__.get('debug', False),
         'tail-lines': opts.__dict__.get('tail_lines', 10),
         'wrap-lines': opts.__dict__.get('wrap-lines', True),
-        'live-view': opts.__dict__.get('dir_mode', False),
+        'live-view': opts.__dict__.get('live-view', False),
+        'download-url': opts.__dict__.get('download-url', False),
     }
 
     if config['follow-names']:
@@ -293,6 +296,7 @@ def main(argv=sys.argv):
         'refresh_filelist': bool(file_lister.all_dir_names),
         'commands': config['commands'],
         'live-view-initial': config['live-view'],
+        'download-url': config['download-url'],
     }
 
     template_dir, assets_dir = get_resource_dirs()
