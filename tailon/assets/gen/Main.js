@@ -305,7 +305,7 @@ var settings = new Settings.Settings({
     linesOfHistory: 2000,
     linesToTail: window.clientConfig['tail-lines-initial'],
     liveView: window.clientConfig['live-view-initial'],
-    dlURL: 'dl-URL' in window.clientConfig ? window.clientConfig['dl-URL'] : "",
+    dlURL: 'download-url' in window.clientConfig ? window.clientConfig['download-url'] : "",
     currentCommand: null,
     currentFile: null,
     currentScript: null,
@@ -510,7 +510,7 @@ var ActionBar = /** @class */ (function () {
         });
     }
     ActionBar.prototype.updateDownloadLink = function (file) {
-        this.$downloadA.attr('href', settings.get('dlURL') + '?app=' + file.replace(/^.*[\\\/]/, ''));
+        this.$downloadA.attr('href', settings.get('dlURL') + file.replace(/^.*[\\\/]/, ''));
     };
     return ActionBar;
 }());

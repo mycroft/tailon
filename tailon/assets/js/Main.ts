@@ -32,7 +32,7 @@ let settings = new Settings.Settings({
     linesOfHistory: 2000,  // 0 for infinite history.
     linesToTail: window.clientConfig['tail-lines-initial'],  // i.e. tail -n $linesToTail.
     liveView: window.clientConfig['live-view-initial'],
-    dlURL: 'dl-URL' in window.clientConfig ? window.clientConfig['dl-URL'] : "",
+    dlURL: 'download-url' in window.clientConfig ? window.clientConfig['download-url'] : "",
     currentCommand: null,
     currentFile: null,
     currentScript: null,
@@ -304,7 +304,7 @@ class ActionBar {
     }
 
     updateDownloadLink(file: string) {
-        this.$downloadA.attr('href', settings.get('dlURL') + '?app=' + file.replace(/^.*[\\\/]/, ''));
+        this.$downloadA.attr('href', settings.get('dlURL') + file.replace(/^.*[\\\/]/, ''));
     }
 }
 
