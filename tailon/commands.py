@@ -43,7 +43,7 @@ class CommandControl:
     def awk(self, script, fn, stdout, stderr, **kw):
         cmd = [self.toolpaths.cmd_awk, '--sandbox', script]
         if fn:
-            cmd.append(fn)
+            cmd.extend(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, **kw)
         log.debug('running awk %s, pid: %s', cmd, proc.proc.pid)
         return proc
@@ -51,7 +51,7 @@ class CommandControl:
     def grep(self, regex, fn, stdout, stderr, **kw):
         cmd = [self.toolpaths.cmd_grep, '--text', '--line-buffered', '--color=never', '-e', regex]
         if fn:
-            cmd.append(fn)
+            cmd.extend(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, **kw)
         log.debug('running grep %s, pid: %s', cmd, proc.proc.pid)
         return proc
@@ -59,7 +59,7 @@ class CommandControl:
     def sift(self, regex, fn, stdout, stderr, **kw):
         cmd = [self.toolpaths.cmd_sift, '--zip','--binary-skip', '--no-color','--recursive', '--no-filename', '-e', regex]
         if fn:
-            cmd.append(fn)
+            cmd.extend(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, **kw)
         log.debug('running sift %s, pid: %s', cmd, proc.proc.pid)
         return proc
@@ -67,20 +67,22 @@ class CommandControl:
     def sed(self, script, fn, stdout, stderr, **kw):
         cmd = [self.toolpaths.cmd_sed, '-u', '-e', script]
         if fn:
-            cmd.append(fn)
+            cmd.extend(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, **kw)
         log.debug('running sed %s, pid: %s', cmd, proc.proc.pid)
         return proc
 
     def tail(self, n, fn, stdout, stderr, **kw):
         flag_follow = '-F' if self.follow_names else '-f'
-        cmd = [self.toolpaths.cmd_tail, '--silent', '-n', str(n), flag_follow, *fn]
+        cmd = [self.toolpaths.cmd_tail, '--silent', '-n', str(n), flag_follow]
+        cmd.extend(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, bufsize=1, **kw)
         log.debug('running tail %s, pid: %s', cmd, proc.proc.pid)
         return proc
 
     def zcat(self, fn, stdout, stderr, **kw):
-        cmd = [self.toolpaths.cmd_zcat, '-f', '-r', fn]
+        cmd = [self.toolpaths.cmd_zcat, '-f', '-r']
+        cmd.extend(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, bufsize=1, **kw)
         log.debug('running zcat %s, pid: %s', cmd, proc.proc.pid)
         return proc

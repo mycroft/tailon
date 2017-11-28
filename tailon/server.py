@@ -187,11 +187,15 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             log.warn('disallowed or unsupported command: %r', command['command'])
             return
 
-        path = os.path.abspath(command['path'])
-        live_path = glob('%s/*.log' %(path))
-        if not self.file_lister.is_path_allowed(path):
-            log.warn('request to unlisted file: %r', path)
-            return
+        path = [os.path.abspath(command['path'])]
+        live_path = []
+
+        for item in path:
+            if not self.file_lister.is_path_allowed(item):
+                log.warn('request to unlisted file: %r', item)
+                return
+            else:
+                live_path.extend(glob('%s/*.log' %(item)))
 
         self.killall()
 
