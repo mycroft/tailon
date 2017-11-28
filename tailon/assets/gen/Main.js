@@ -305,6 +305,7 @@ var settings = new Settings.Settings({
     linesOfHistory: 2000,
     linesToTail: window.clientConfig['tail-lines-initial'],
     liveView: window.clientConfig['live-view-initial'],
+    dlURL: 'dl-URL' in window.clientConfig ? window.clientConfig['dl-URL'] : "",
     currentCommand: null,
     currentFile: null,
     currentScript: null,
@@ -509,7 +510,7 @@ var ActionBar = /** @class */ (function () {
         });
     }
     ActionBar.prototype.updateDownloadLink = function (file) {
-        this.$downloadA.attr('href', 'fetch/' + file);
+        this.$downloadA.attr('href', settings.get('dlURL') + '?app=' + file);
     };
     return ActionBar;
 }());
@@ -623,15 +624,13 @@ var select_param = new URL(location.href).searchParams.get("app");
 var default_file = select_param ? select_param : ('file' in query_string ? query_string['file'][0] : null);
 var default_cmd = 'grep';
 var default_script = 'script' in query_string ? query_string['script'][0] : null;
-console.log("Default command: " + default_cmd);
-settings.set('currentCommand', default_cmd);
 var m_action_bar = new MinimizedActionBar('#minimized-action-bar');
 var action_bar = new ActionBar('#action-bar');
-// var cmd_select = new CommandSelect('#command-select select', default_cmd);
+// Set defaults
+settings.set('currentCommand', default_cmd);
 var file_select = new FileSelect('#file-select select', default_file);
 var script_input = new ScriptInput('#script-input', default_script);
 settings.onChange('currentFile', changeFileModeScript);
-// settings.onChange('currentCommand', changeFileModeScript);
 settings.onChange('currentScript', changeFileModeScript);
 settings.onChange('liveView', changeFileModeScript);
 // Start showing the first file as soon as we're connected.
