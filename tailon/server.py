@@ -47,8 +47,10 @@ class Files(BaseHandler):
     def get(self, check=None):
         self.application.file_lister.refresh()
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-        self.set_header('Content-Type', 'application/json')  
-        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Content-Type', 'application/json')
+
+        for header in self.config["http-headers"]:
+            self.set_header(header, self.config["http-headers"][header])
 
         if check:
             message = self.application.file_lister.has_changed
@@ -62,8 +64,10 @@ class Dirs(BaseHandler):
         self.application.file_lister.refresh()
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
         self.set_header('Content-Type', 'application/json')
-        self.set_header('Access-Control-Allow-Origin', '*')
-        
+
+        for header in self.config["http-headers"]:
+            self.set_header(header, self.config["http-headers"][header])
+
         if check:
             message = self.application.file_lister.has_changed
         else:
