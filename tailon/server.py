@@ -140,10 +140,13 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         lines = data.splitlines(True)
 
         if not lines:
-            return
+            msg = "eof"
+            self.write_json(msg)
+        else:
+            lines = utils.line_buffer(lines, self.last_stdout_line)
+            self.write_json(lines)
 
-        lines = utils.line_buffer(lines, self.last_stdout_line)
-        self.write_json(lines)
+
 
     def stderr_callback(self, path, stream, data):
         # log.debug('stderr: %s', data)
