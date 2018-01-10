@@ -69,6 +69,7 @@ def parseconfig(cfg):
         'follow-names':    raw_config.get('follow-names', False),
         'relative-root':   raw_config.get('relative-root', '/'),
         'http-auth':       raw_config.get('http-auth', False),
+        'http-headers':    raw_config.get('http-headers', {}),
         'users':           raw_config.get('users', {}),
         'wrap-lines':      raw_config.get('wrap-lines', True),
         'tail-lines':      raw_config.get('tail-lines', 10),
@@ -118,9 +119,13 @@ def parseopts(args=None):
       relative-root: /tailon  # web app root path (default: '')
       commands: [tail, grep]  # allowed commands
       tail-lines: 10          # number of lines to tail initially
-      grep-lines: 3000       # number max of lines to grep
+      grep-lines: 3000        # number max of lines to grep
       wrap-lines: true        # initial line-wrapping state
       live-view: False        # view files live (tail) or just search in files
+
+      http-headers:           # custom http headers
+        Access-Control-Allow-Origin: "*"
+
 
       files:
         - '/var/log/messages'
@@ -215,6 +220,7 @@ def setup(opts):
         'commands': opts.commands,
         'allow-transfers': opts.allow_transfers,
         'http-auth': opts.__dict__.get('http_auth', False),
+        'http-headers': opts.__dict__.get('http_auth', {}),
         'users': dict((i.split(':') for i in opts.users)),
         'follow-names': opts.follow_names,
         'relative-root': opts.__dict__.get('relative_root', ''),
