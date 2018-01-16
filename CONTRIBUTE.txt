@@ -3,7 +3,7 @@ source bin/activate
 pip install .
 tailon -f /var/log -b localhost:8080 -d
 # either use the webUI on localhost:8080
-# or use webscoket client to query the backend
+# or use websocket client to query the backend
 # ws://localhost:8080/ws/917/ez2zsmvz/websocket
 # ["{\"command\":\"awk\",\"path\":\"/var/log/\",\"script\":\"services\",\"tail-lines\":10, \"dir_mode\": \"true\"}"]
-# I use soimple websocket browser plugin
+# I use simple websocket browser plugin
