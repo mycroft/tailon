@@ -5,6 +5,7 @@ import re
 import logging
 import argparse
 import collections
+from glob import glob
 
 log = logging.getLogger('utils')
 
@@ -96,7 +97,7 @@ class FileLister:
             for path in paths:
                 if os.path.isdir(path):
                     self.all_dir_names.add(os.path.abspath(path))
-                    dirs.append([os.path.abspath(path)])
+                    dirs.append(os.path.abspath(path))
                     files.extend(self.lister.listdir(path))
                 else:
                     files.append(path)
@@ -109,6 +110,13 @@ class FileLister:
         self.has_changed = (afn != self.all_file_names)
         self.all_file_names = afn
 
+def getlevels(path):
+    levels = set()
+    files = glob('%s/*' %(path))
+    for file in files:
+        if re.findall('.*/\w+.(log).*', file):
+            levels.add(re.findall('.*/(\w+).log.*', file)[0])
+    return levels
 
 def parseaddr(arg):
     tmp = arg.split(':')

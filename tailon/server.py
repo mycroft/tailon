@@ -11,6 +11,7 @@ from tornado_http_auth import BasicAuthMixin, DigestAuthMixin
 
 from . import utils
 from glob import glob
+import re
 
 
 STREAM = process.Subprocess.STREAM
@@ -74,6 +75,22 @@ class Dirs(BaseHandler):
             message = self.application.file_lister.dirs
         self.write(escape.json_encode(message))
 
+class GetLevels(BaseHandler):
+    def get(self, app=None):
+        levels = {}
+        self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+
+        for header in self.config["http-headers"]:
+            self.set_header(header, self.config["http-headers"][header])
+
+        self.application.file_lister.refresh()
+        dirs = self.application.file_lister.all_dir_names
+
+        for dirname in dirs:
+            found = re.search('.*%s' %app, dirname)
+            if found:
+                levels[dirname] = list(utils.getlevels(dirname))
+        self.write(levels)
 
 class NonCachingStaticFileHandler(web.StaticFileHandler):
     def set_extra_headers(self, path):
@@ -197,15 +214,24 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             log.warn('disallowed or unsupported command: %r', command['command'])
             return
 
-        path = [os.path.abspath(command['path'])]
+        #path = [os.path.abspath(command['path'])]
+        path = []
         live_path = []
 
-        for item in path:
+        for item in [os.path.abspath(command['path'])]:
             if not self.file_lister.is_path_allowed(item):
                 log.warn('request to unlisted file: %r', item)
                 return
             else:
-                live_path.extend(glob('%s/*.log' %(item)))
+                files = sorted(
+                        glob('%s/*' %(item)),
+                        key=lambda file: re.findall('.*/\w+(\.log.*)', file),
+                        reverse=True
+                        )
+                live_path.extend(
+                        [file for file in files if re.search('.*/\w+.(log)$', file)]
+                        )
+                path.extend(files)
 
         self.killall()
 
@@ -334,6 +360,7 @@ class TailonApplication(BaseApplication):
             [r'/assets/(.*)', NonCachingStaticFileHandler, {'path': os.path.join(self.here, 'assets/')}],
             [r'/files(/check)?', Files],
             [r'/dirs(/check)?', Dirs],
+            [r'/levels/(?P<app>[^\/]+)?', GetLevels],
             [r'/fetch/(.*)', Fetch, {'path': '/'}],
             [r'/', Index, {'template': 'tailon.html'}],
         ]
