@@ -86,10 +86,9 @@ class GetLevels(BaseHandler):
         self.application.file_lister.refresh()
         dirs = self.application.file_lister.all_dir_names
 
-        for dirname in dirs:
-            found = re.search('.*%s' %app, dirname)
-            if found:
-                levels[dirname] = list(utils.getlevels(dirname))
+        app_dirs = utils.path_from_app(dirs, app)
+        for app_dir in app_dirs:
+            levels[app_dir] = list(utils.getlevels(app_dir))
         self.write(levels)
 
 class NonCachingStaticFileHandler(web.StaticFileHandler):
@@ -214,11 +213,19 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             log.warn('disallowed or unsupported command: %r', command['command'])
             return
 
-        #path = [os.path.abspath(command['path'])]
+        dirs = self.file_lister.all_dir_names
+
+        if command['path'].startswith('/'):
+            req_path = command['path']
+        else:
+            log.debug('path is an app name')
+            req_path = utils.path_from_app(dirs, command['path'])
+
         path = []
         live_path = []
+        log.debug(req_path)
 
-        for item in [os.path.abspath(command['path'])]:
+        for item in [req_path]:
             if not self.file_lister.is_path_allowed(item):
                 log.warn('request to unlisted file: %r', item)
                 return
