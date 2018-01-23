@@ -110,6 +110,17 @@ class FileLister:
         self.has_changed = (afn != self.all_file_names)
         self.all_file_names = afn
 
+def path_from_app(dirs, app):
+    app_dir = []
+    for dirname in dirs:
+        found = re.search('.*%s' %app, dirname)
+        if found:
+            app_dir.append(found.group())
+    if len(app_dir) > 1:
+        log.error('found more than one path for app %s. paths = %s' %(app, app_dir))
+    return app_dir[0]
+
+
 def getlevels(path):
     levels = set()
     files = glob('%s/*' %(path))
