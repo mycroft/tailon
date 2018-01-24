@@ -206,12 +206,15 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         log.debug('received message: %r', command)
         log.debug(command.keys())
 
-        if not set(command.keys()) <= {'command', 'live-view', 'path', 'tail-lines', 'grep-lines', 'script'}:
+        if not set(command.keys()) <= {'command', 'live-view', 'path', 'tail-lines', 'grep-lines', 'script', 'level'}:
+            log.warn('unsupported keys found in message')
             return
 
         if command['command'] not in allowed_commands:
             log.warn('disallowed or unsupported command: %r', command['command'])
             return
+
+        loglevel = command['level'] if 'level' in command.keys() else '\w+'
 
         dirs = self.file_lister.all_dir_names
 
@@ -225,20 +228,19 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         live_path = []
         log.debug(req_path)
 
-        for item in [req_path]:
-            if not self.file_lister.is_path_allowed(item):
-                log.warn('request to unlisted file: %r', item)
-                return
-            else:
-                files = sorted(
-                        glob('%s/*' %(item)),
-                        key=lambda file: re.findall('.*/\w+(\.log.*)', file),
-                        reverse=True
-                        )
-                live_path.extend(
-                        [file for file in files if re.search('.*/\w+.(log)$', file)]
-                        )
-                path.extend(files)
+        if not self.file_lister.is_path_allowed(req_path):
+            log.warn('request to unlisted file: %r', req_path)
+            return
+        else:
+            files = sorted(
+                    glob('%s/*' %(req_path)),
+                    key=lambda file: re.findall('.*/%s(\.log.*)' %loglevel, file),
+                    reverse=True
+                    )
+            live_path.extend(
+                    [file for file in files if re.search('.*/%s.(log)$' %loglevel, file)]
+                    )
+            path.extend(files)
 
         self.killall()
 
