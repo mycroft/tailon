@@ -72,6 +72,9 @@ def parseconfig(cfg):
         'http-headers':    raw_config.get('http-headers', {}),
         'users':           raw_config.get('users', {}),
         'wrap-lines':      raw_config.get('wrap-lines', True),
+        'ssl':             raw_config.get('ssl', False),
+        'cert-file':       raw_config.get('cert-file', ''),
+        'key-file':        raw_config.get('key-file', ''),
         'tail-lines':      raw_config.get('tail-lines', 10),
         'grep-lines':      raw_config.get('grep-lines', 3000),
         'live-view':       raw_config.get('live-view', False),
@@ -123,6 +126,9 @@ def parseopts(args=None):
       wrap-lines: true        # initial line-wrapping state
       live-view: False        # view files live (tail) or just search in files
 
+      ssl: False              # enable https/wss functionnality (require a cert-file)
+      cert-file: ""           # Certificate required for ssl encryption
+      key-file: ""            # Key required for ssl encryption
       http-headers:           # custom http headers
         Access-Control-Allow-Origin: "*"
 
@@ -193,7 +199,12 @@ def parseopts(args=None):
         help='number of lines to tail initially')
     arg('-g', '--grep-lines', default=3000, type=int, metavar='num',
         help='number max of lines to grep')
-
+    arg('-s', '--ssl', action='store_true',
+        help='enable https/wss functionnality')
+    arg('-C', '--cert-file', default='', dest="cert-file", metavar="crt file",
+        help='Certificate for ssl encryption')
+    arg('-k', '--key-file', default='', dest="key-file", metavar="key file",
+        help='Key for ssl encryption')
     arg('-m', '--commands', nargs='*', metavar='cmd',
         choices=commands.ToolPaths.command_names, default=['tail', 'grep', 'awk'],
         help='allowed commands (default: tail grep awk)')
@@ -228,6 +239,9 @@ def setup(opts):
         'tail-lines': opts.__dict__.get('tail_lines', 10),
         'grep-lines': opts.__dict__.get('grep_lines', 3000),
         'wrap-lines': opts.__dict__.get('wrap-lines', True),
+        'ssl': opts.__dict__.get('ssl', False),
+        'cert-file': opts.__dict__.get('cert-file', ''),
+        'key-file': opts.__dict__.get('key-file', ''),
         'live-view': opts.__dict__.get('live-view', False),
         'download-url': opts.__dict__.get('download-url', False),
     }
@@ -249,7 +263,13 @@ def filter_cli_files(files):
 
 
 def start_server(application, config, client_config):
-    httpd = httpserver.HTTPServer(application)
+    if config['ssl']:
+        httpd = httpserver.HTTPServer(application, ssl_options={
+            "certfile": config['cert-file'],
+            "keyfile": config['key-file']
+        })
+    else:
+        httpd = httpserver.HTTPServer(application)
     httpd.listen(config['port'], config['addr'])
 
     log.debug('Config:\n%s', pprint.pformat(config))
