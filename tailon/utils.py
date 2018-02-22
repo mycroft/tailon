@@ -118,6 +118,9 @@ def path_from_app(dirs, app):
             app_dir.append(found.group())
     if len(app_dir) > 1:
         log.error('found more than one path for app %s. paths = %s' %(app, app_dir))
+    if len(app_dir) == 0:
+        log.error('No paths found for app %s. paths = %s' %(app, app_dir))
+        return False
     return app_dir[0]
 
 

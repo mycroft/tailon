@@ -75,6 +75,7 @@ class Dirs(BaseHandler):
             message = self.application.file_lister.dirs
         self.write(escape.json_encode(message))
 
+
 class GetLevels(BaseHandler):
     def get(self, app=None):
         levels = {}
@@ -87,9 +88,14 @@ class GetLevels(BaseHandler):
         dirs = self.application.file_lister.all_dir_names
 
         app_dirs = utils.path_from_app(dirs, app)
-        for app_dir in app_dirs:
-            levels[app_dir] = list(utils.getlevels(app_dir))
-        self.write(levels)
+
+        if not app_dirs:
+            levels = []
+        else:
+            levels = list(utils.getlevels(app_dirs))
+
+        self.write(escape.json_encode(levels))
+
 
 class NonCachingStaticFileHandler(web.StaticFileHandler):
     def set_extra_headers(self, path):
