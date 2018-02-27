@@ -161,10 +161,9 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         data = data.decode('utf8', errors='replace')
         lines = data.splitlines(True)
 
-        if not lines:
-            msg = "eof"
-            self.write_json(msg)
-        else:
+        self.remaining_lines -= len(lines)
+        
+        if lines:
             lines = utils.line_buffer(lines, self.last_stdout_line)
             self.write_json(lines)
 
@@ -264,19 +263,12 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             grep_lines = command.get('grep-lines', self.initial_grep_lines)
             regex = command.get('script', '.*')
             log.debug('n = %s, path = %s, regex = %s' %(n, path, regex))
+            self.remaining_lines = grep_lines
 
-            if not command['live-view'] and self.toolpaths.cmd_sift:
-                proc_pregrep, proc_grep = self.cmd_control.all_grep(grep_lines, path, regex, STREAM, STREAM)
-            elif not command['live-view'] and not self.toolpaths.cmd_sift:
-                proc_zcat, proc_pregrep, proc_grep = self.cmd_control.all_grep(grep_lines, path, regex, STREAM, STREAM)
+            if not command['live-view']:
+                self.run_grep_all(grep_lines, path, regex)
             elif command['live-view']:
-                proc_tail, proc_grep = self.cmd_control.tail_grep(n, live_path, regex, STREAM, STREAM)
-            self.processes['grep'] = proc_grep
-
-            outcb = partial(self.stdout_callback, path, proc_grep.stdout)
-            errcb = partial(self.stderr_callback, path, proc_grep.stderr)
-            proc_grep.stdout.read_until_close(outcb, outcb)
-            proc_grep.stderr.read_until_close(errcb, errcb)
+                self.run_live_view(n, live_path, regex)
 
         elif 'awk' in command['command']:
             n = command.get('tail-lines', self.initial_tail_lines)
@@ -307,6 +299,35 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             errcb = partial(self.stderr_callback, path, proc_sed.stderr)
             proc_sed.stdout.read_until_close(outcb, outcb)
             proc_sed.stderr.read_until_close(errcb, errcb)
+
+    def run_live_view(self, n, live_path, regex):
+        proc_tail, proc_grep = self.cmd_control.tail_grep(n, live_path, regex, STREAM, STREAM)
+        self.processes['grep'] = proc_grep
+
+        outcb = partial(self.stdout_callback, live_path, proc_grep.stdout)
+        errcb = partial(self.stderr_callback, live_path, proc_grep.stderr)
+        proc_grep.stdout.read_until_close(outcb, outcb)
+        proc_grep.stderr.read_until_close(errcb, errcb)
+
+    def run_grep_all(self, grep_lines, path, regex, code=0):
+        if(len(path)<=0 or self.remaining_lines<=1):
+            msg = "eof"
+            self.write_json(msg)
+            return
+
+        if(self.toolpaths.cmd_sift):
+            proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, path.pop(), regex, STREAM, STREAM)
+        else:
+            proc_zcat, proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, path.pop(), regex, STREAM, STREAM)
+
+        self.processes['grep'] = proc_grep
+
+        outcb = partial(self.stdout_callback, path, proc_grep.stdout)
+        errcb = partial(self.stderr_callback, path, proc_grep.stderr)
+        end_of_file = partial(self.run_grep_all, grep_lines, path, regex)
+        proc_grep.stdout.read_until_close(outcb, outcb)
+        proc_grep.stderr.read_until_close(errcb, errcb)
+        proc_grep.set_exit_callback(end_of_file)
 
     def on_close(self):
         self.killall()
