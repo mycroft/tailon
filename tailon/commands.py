@@ -59,7 +59,7 @@ class CommandControl:
     def sift(self, regex, fn, stdout, stderr, **kw):
         cmd = [self.toolpaths.cmd_sift, '--zip','--binary-skip', '--no-color','--recursive', '--no-filename', '-e', regex]
         if fn:
-            cmd.extend(fn)
+            cmd.append(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, **kw)
         log.debug('running sift %s, pid: %s', cmd, proc.proc.pid)
         return proc
@@ -88,7 +88,7 @@ class CommandControl:
 
     def zcat(self, fn, stdout, stderr, **kw):
         cmd = [self.toolpaths.cmd_zcat, '-f', '-r']
-        cmd.extend(fn)
+        cmd.append(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, bufsize=1, **kw)
         log.debug('running zcat %s, pid: %s', cmd, proc.proc.pid)
         return proc

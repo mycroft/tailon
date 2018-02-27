@@ -139,6 +139,11 @@ def parseaddr(arg):
     addr = '' if addr == '*' else addr
     return port, addr
 
+def parse_filename(filename):
+    try:
+        return int(re.findall('.*\/*\.log\.([0-9]*).*', filename)[0])
+    except(IndexError):
+        return 0
 
 def remove_escapes(string):
     return re.sub(r'\x1B\[(?:[0-9]{1,2}(?:;[0-9]{1,2})?)?[m|K]', '', string)
