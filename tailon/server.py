@@ -239,7 +239,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         else:
             files = sorted(
                     glob('%s/%s.log*' %(req_path, loglevel if loglevel != '\w+' else '*')),
-                    key=lambda file: re.findall('.*\/%s\.log\.([0-9]*).*' %loglevel, file),
+                    key=lambda file: utils.parse_filename(file),
                     reverse=True
                     )
             live_path.extend(
