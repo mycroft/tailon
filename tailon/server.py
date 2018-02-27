@@ -221,7 +221,6 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             return
 
         loglevel = command['level'] if 'level' in command.keys() else '\w+'
-
         dirs = self.file_lister.all_dir_names
 
         if command['path'].startswith('/'):
@@ -239,12 +238,12 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             return
         else:
             files = sorted(
-                    glob('%s/*' %(req_path)),
-                    key=lambda file: re.findall('.*/%s(\.log.*)' %loglevel, file),
+                    glob('%s/%s.log*' %(req_path, loglevel if loglevel != '\w+' else '*')),
+                    key=lambda file: re.findall('.*\/%s\.log\.([0-9]*).*' %loglevel, file),
                     reverse=True
                     )
             live_path.extend(
-                    [file for file in files if re.search('.*/%s.(log)$' %loglevel, file)]
+                    [file for file in files if re.search('.*\/%s.(log)$' %loglevel, file)]
                     )
             path.extend(files)
 
