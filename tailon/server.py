@@ -162,7 +162,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         lines = data.splitlines(True)
 
         self.remaining_lines -= len(lines)
-        
+
         if lines:
             lines = utils.line_buffer(lines, self.last_stdout_line)
             self.write_json(lines)
@@ -200,9 +200,13 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
             log.debug('killing %s process: %s', name, proc.pid)
             proc.stdout.close()
             proc.stderr.close()
-            proc.proc.kill()
-            proc.proc.wait()
-            proc.proc = None
+            try:
+                proc.proc.kill()
+                proc.proc.wait()
+                proc.proc = None
+            except(OSError):
+                log.debug('killing failed for %s process: %s', name, proc.pid)
+
             self.processes[name] = None
 
     def on_message(self, message):
@@ -310,6 +314,9 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         proc_grep.stderr.read_until_close(errcb, errcb)
 
     def run_grep_all(self, grep_lines, path, regex, code=0):
+        if 'grep' in self.processes:
+            self.processes.pop('grep')
+
         if(len(path)<=0 or self.remaining_lines<=1):
             msg = "eof"
             self.write_json(msg)
