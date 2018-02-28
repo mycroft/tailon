@@ -1,1 +1,1 @@
-__version__ = '1.3.0-criteo.4'
+__version__ = '1.3.0-criteo.5'
