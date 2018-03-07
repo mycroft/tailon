@@ -163,6 +163,8 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
 
         self.remaining_lines -= len(lines)
 
+        log.debug('Number of lines remaining: %s' % self.remaining_lines)
+
         if lines:
             lines = utils.line_buffer(lines, self.last_stdout_line)
             self.write_json(lines)
@@ -324,10 +326,14 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
 
         if(self.toolpaths.cmd_sift):
             proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, path.pop(), regex, STREAM, STREAM)
+            self.processes['pregrep'] = proc_pregrep
+            self.processes['grep'] = proc_grep
         else:
             proc_zcat, proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, path.pop(), regex, STREAM, STREAM)
+            self.processes['zcat'] = proc_zcat
+            self.processes['pregrep'] = proc_pregrep
+            self.processes['grep'] = proc_grep
 
-        self.processes['grep'] = proc_grep
 
         outcb = partial(self.stdout_callback, path, proc_grep.stdout)
         errcb = partial(self.stderr_callback, path, proc_grep.stderr)
