@@ -316,8 +316,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         proc_grep.stderr.read_until_close(errcb, errcb)
 
     def run_grep_all(self, grep_lines, path, regex, code=0):
-        if 'grep' in self.processes:
-            self.processes.pop('grep')
+        self.killall()
 
         if(len(path)<=0 or self.remaining_lines<=1):
             msg = "eof"
