@@ -25,7 +25,7 @@ master_doc = 'index'
 project = u'tailon'
 copyright = u'2013-2017, Georgi Valkov'
 
-release = '1.3.0-criteo.5'
+release = '1.3.0-criteo.6'
 version = release
 
 exclude_patterns = ['_build']
