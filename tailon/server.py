@@ -319,16 +319,23 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
         self.killall()
 
         if(len(path)<=0 or self.remaining_lines<=1):
-            msg = "eof"
+            remaining = {"status": "run-finish"}
+            msg = escape.json_encode(remaining)
             self.write_json(msg)
             return
 
+        filename = path.pop()
+
+        remaining = {"status": "run-update", "remaining_count": len(path), "current_filename": os.path.basename(filename)}
+        msg = escape.json_encode(remaining)
+        self.write_json(msg)
+
         if(self.toolpaths.cmd_sift):
-            proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, path.pop(), regex, STREAM, STREAM)
+            proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, filename, regex, STREAM, STREAM)
             self.processes['pregrep'] = proc_pregrep
             self.processes['grep'] = proc_grep
         else:
-            proc_zcat, proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, path.pop(), regex, STREAM, STREAM)
+            proc_zcat, proc_pregrep, proc_grep = self.cmd_control.all_grep(self.remaining_lines, filename, regex, STREAM, STREAM)
             self.processes['zcat'] = proc_zcat
             self.processes['pregrep'] = proc_pregrep
             self.processes['grep'] = proc_grep
