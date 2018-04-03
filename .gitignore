@@ -52,3 +52,7 @@ nosetests.xml
 .pydevproject
 
 \#*\#
+
+venv/
+.eggs/
+.pytest_cache/

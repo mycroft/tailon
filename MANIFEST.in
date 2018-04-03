@@ -1,5 +1,6 @@
 include README.rst
 include LICENSE
+include requirements-dev.txt
 recursive-include tailon/assets/fonts *
 recursive-include tailon/assets/gen *
 recursive-include tailon/templates *
