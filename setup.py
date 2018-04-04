@@ -1,5 +1,16 @@
 from setuptools import setup
+import os
 
+os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
+
+def _read_reqs(relpath):
+    fullpath = os.path.join(os.path.dirname(__file__), relpath)
+    with open(fullpath) as f:
+        return [s.strip() for s in f.readlines()
+                if (s.strip() and not s.startswith("#"))]
+
+_TESTS_REQUIREMENTS_TXT = _read_reqs("requirements-dev.txt")
+_TEST_REQUIRE = [l for l in _TESTS_REQUIREMENTS_TXT if "://" not in l]
 
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -29,6 +40,8 @@ kw = {
     'packages':         ['tailon'],
     'classifiers':      classifiers,
     'install_requires': requirements,
+    'tests_require':    _TEST_REQUIRE,
+    'setup_requires':   ['pytest-runner'],
     'include_package_data': True,
     'zip_safe': False,
     'entry_points': {
