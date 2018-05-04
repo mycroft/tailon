@@ -68,11 +68,23 @@ class FileUtils:
             else:
                 continue
 
+    @staticmethod
+    def paths_from_globs(globs, include_missing=False):
+        for entry in globs:
+            paths = glob(entry)
+            if not paths and include_missing:
+                yield entry
+            for path in paths:
+                if path.startswith('./'):
+                    path = path.replace('./', '', 1)
+                yield path
+
+
 
 class FileLister:
-    def __init__(self, lister, groups, include_missing=False):
+    def __init__(self, lister, group_to_globs, include_missing=False):
         self.lister = lister
-        self.groups = groups
+        self.group_to_globs = group_to_globs
         self.include_missing = include_missing
 
         self.files = collections.OrderedDict()
@@ -84,14 +96,14 @@ class FileLister:
     def is_path_allowed(self, path):
         return path in self.all_file_names or path in self.all_dir_names
 
-
     def refresh(self):
         log.debug('refreshing group file listings')
         self.files = collections.OrderedDict()
         self.dirs = collections.OrderedDict()
         self.all_dir_names = set()
 
-        for group, paths in self.groups.items():
+        for group, globs in self.group_to_globs.items():
+            paths = list(self.lister.paths_from_globs(globs))
             files = self.files.setdefault(group, [])
             dirs = self.dirs.setdefault(group, [])
             for path in paths:

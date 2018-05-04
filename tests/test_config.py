@@ -63,8 +63,7 @@ def test_simple(tempfiles):
     '''.format(dir=tempfiles.dir)
     cfg = main.parseconfig(textwrap.dedent(config))
 
-    a1 = set(tempfiles.files)
-    a1.discard(pjoin(tempfiles.dir, 'dir/c.log'))
+    a1 = {'%s/*.log'% tempfiles.dir, '%s/dir/[abc].log'% tempfiles.dir}
     a2 = set(cfg['files']['__ungrouped__'])
 
     assert a1 == a2
@@ -87,15 +86,15 @@ def test_groups(tempfiles):
     assert cfg['port'] == 8080
     assert cfg['addr'] == 'localhost'
 
-    a1 = set((pjoin(tempfiles.dir, i) for i in ('dir/a.log', 'dir/b.log')))
+    a1 = {'%s/dir/[ab].log'% tempfiles.dir}
     a2 = set(cfg['files']['__ungrouped__'])
     assert a1 == a2
 
-    b1 = set((pjoin(tempfiles.dir, i) for i in ('1.log', '2.log')))
+    b1 = {'%s/[12].log'% tempfiles.dir}
     b2 = set(cfg['files']['group1'])
     assert b1 == b2
 
-    c1 = {pjoin(tempfiles.dir, '3.log')}
+    c1 = {'%s/3.log'% tempfiles.dir}
     c2 = set(cfg['files']['group2'])
     assert c1 == c2
 
