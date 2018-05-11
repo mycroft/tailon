@@ -95,12 +95,8 @@ def parseconfig(cfg):
                 group_name, j = list(paths_or_group.items())[0]
                 helper(j, group_name, True)
                 continue
-            for path in glob.glob(paths_or_group):
-                if not os.access(path, os.R_OK):
-                    log.info('skipping unreadable file: %r', path)
-                    continue
-                d = files.setdefault(group, [])
-                d.append(path)
+            d = files.setdefault(group, [])
+            d.append(paths_or_group)
 
     helper(raw_config['files'])
     return config
@@ -224,10 +220,10 @@ def setup(opts):
         return config
 
     port, addr = utils.parseaddr(opts.bind if opts.bind else 'localhost:8080')
-    config = {
+    return {
         'port': port,
         'addr': addr,
-        'files': {'__ungrouped__': []},
+        'files': {'__ungrouped__': opts.files},
         'commands': opts.commands,
         'allow-transfers': opts.allow_transfers,
         'http-auth': opts.__dict__.get('http_auth', False),
@@ -245,21 +241,6 @@ def setup(opts):
         'live-view': opts.__dict__.get('live-view', False),
         'download-url': opts.__dict__.get('download-url', False),
     }
-
-    if config['follow-names']:
-        config['files']['__ungrouped__'] = opts.files  # These don't need to exist.
-    else:
-        config['files']['__ungrouped__'] = list(filter_cli_files(opts.files))
-
-    return config
-
-
-def filter_cli_files(files):
-    for entry in files:
-        for path in glob.glob(entry):
-            if path.startswith('./'):
-                path = path.replace('./', '', 1)
-            yield path
 
 
 def start_server(application, config, client_config):
