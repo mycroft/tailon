@@ -40,8 +40,6 @@ kw = {
     'packages':         ['tailon'],
     'classifiers':      classifiers,
     'install_requires': requirements,
-    'tests_require':    _TEST_REQUIRE,
-    'setup_requires':   ['pytest-runner'],
     'include_package_data': True,
     'zip_safe': False,
     'entry_points': {
