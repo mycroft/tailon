@@ -11,3 +11,4 @@ PyYAML >= 3.11
 cssmin >= 0.2.0
 webassets >= 0.12.1
 bumpversion >= 0.5.3
+pytest-runner >= 4.2

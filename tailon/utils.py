@@ -125,7 +125,7 @@ class FileLister:
 def path_from_app(dirs, app):
     app_dir = []
     for dirname in dirs:
-        found = re.search('.*%s' %app, dirname)
+        found = re.search('.*\/%s' %app, dirname)
         if found:
             app_dir.append(found.group())
     if len(app_dir) > 1:
