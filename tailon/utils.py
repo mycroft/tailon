@@ -153,6 +153,14 @@ def parseaddr(arg):
 
 def parse_filename(filename):
     try:
+        # new format (xxx.log.gz, xxx.log.gz.1, xxx.log.gz.2, xxx.log.gz.3...)
+        if re.match(r'^.*\.log\.gz$', filename):
+            return 0
+        groups = re.findall(r'^.*\.log\.gz\.([0-9]*)$', filename)
+        if len(groups) > 0:
+            return int(groups[0])
+
+        # legacy format (xxx.log, xxx.log.1, xxx.log.2.gz, xxx.log.3.gz...)
         return int(re.findall('.*\/*\.log\.([0-9]*).*', filename)[0])
     except(IndexError):
         return 0
