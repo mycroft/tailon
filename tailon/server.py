@@ -248,7 +248,7 @@ class WebsocketTailon(sockjs.tornado.SockJSConnection):
                     reverse=True
                     )
             live_path.extend(
-                    [file for file in files if re.search('.*\/%s.(log)$' %loglevel, file)]
+                    [file for file in files if re.search('.*\/%s.(log)(.gz)$' %loglevel, file)]
                     )
             path.extend(files)
 

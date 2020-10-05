@@ -21,6 +21,7 @@ class ToolPaths:
         self.cmd_sed   = self.first_in_path('gsed', 'sed')
         self.cmd_tail  = self.first_in_path('gtail', 'tail')
         self.cmd_zcat  = self.first_in_path('zcat')
+        self.cmd_gztool = self.first_in_path('gztool')
 
 
         if overwrites:
@@ -75,6 +76,8 @@ class CommandControl:
     def tail(self, n, fn, stdout, stderr, **kw):
         flag_follow = '-F' if self.follow_names else '-f'
         cmd = [self.toolpaths.cmd_tail, '--silent', '-n', str(n), flag_follow]
+        if fn[0].endswith('.gz'):
+            cmd = [self.toolpaths.cmd_gztool, '-I', '/dev/null', '-v', '0', '-T', '-s', '1']
         cmd.extend(fn)
         proc = process.Subprocess(cmd, stdout=stdout, stderr=stderr, bufsize=1, **kw)
         log.debug('running tail %s, pid: %s', cmd, proc.proc.pid)
